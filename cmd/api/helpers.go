@@ -88,7 +88,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 			panic(err)
 
 		default:
-			return nil
+			return err
 
 		}
 	}
