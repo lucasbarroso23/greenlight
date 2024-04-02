@@ -36,7 +36,10 @@ func main() {
 	// Reading comnmand-line flags in to the config
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://greenlight:pa55word@localhost/greenlight?sslmode=disable", "PostgresSQL DSN")
+	// two ways to build the string connection
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("GREENLIGHT_DB_DSN"), "PostgresSQL DSN")
+	// flag.StringVar(&cfg.db.dsn, "db-dsn", "user=greenlight dbname=greenlight password=pa55word sslmode=disable", "PostgresSQL DSN")
+
 	flag.Parse()
 
 	// Initializing a new logger witch writes messages to the standard out stream
