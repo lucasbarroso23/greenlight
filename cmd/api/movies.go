@@ -10,6 +10,7 @@ import (
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
+	// input struct works as a dto model
 	var input struct {
 		Title   string       `json:"title"`
 		Year    int32        `json:"year"`
@@ -17,12 +18,14 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		Genres  []string     `json:"genres"`
 	}
 
+	// in this step we parse the request body into the input struct
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
+	// now we create our internal model data
 	movie := &data.Movie{
 		Title:   input.Title,
 		Year:    input.Year,
@@ -30,6 +33,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		Genres:  input.Genres,
 	}
 
+	// custom validator to make sure the data is ok
 	v := validator.New()
 
 	if data.ValidateMovie(v, movie); !v.Valid() {
@@ -37,7 +41,22 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	fmt.Fprintf(w, "%+v\n", input)
+	// inserting the data into the database
+	err = app.models.Movies.Insert(movie)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// very nice step where we give back to the user where the created movie can be found
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
+	// api response
+	err = app.writeJSON(w, http.StatusCreated, envelop{"movie": movie}, headers)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 
 }
 
