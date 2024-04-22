@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/lucasbarroso23/greenlight/internal/validator"
 )
 
 // envelop type is used to structure our response in a more readable way
@@ -100,4 +102,37 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 		return errors.New("Body must only contain a single JSON value")
 	}
 	return nil
+}
+
+func (app *application) readStrings(qs url.Values, key string, defultValue string) string {
+	s := qs.Get(key)
+	if s == "" {
+		return defultValue
+	}
+
+	return s
+}
+
+func (app *application) readCsv(qs url.Values, key string, defaultValue []string) []string {
+	csv := qs.Get(key)
+	if csv == "" {
+		return defaultValue
+	}
+
+	return strings.Split(csv, ",")
+}
+
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultValue
+	}
+
+	return i
 }
